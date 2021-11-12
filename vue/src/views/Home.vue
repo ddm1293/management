@@ -74,7 +74,7 @@
       <el-pagination
           v-model:currentPage="currentPage"
           :page-sizes="[5, 10, 20]"
-          :page-size="10"
+          :page-size="pageSize"
           layout="total, sizes, prev, pager, next, jumper"
           :total="total"
           @size-change="handleSizeChange"
@@ -88,6 +88,8 @@
 <script>
 
 
+import request from "@/utils/request";
+
 export default {
   name: 'Home',
   components: {
@@ -97,22 +99,31 @@ export default {
     return {
       form: {},
       dialogVisible: false,
-      search: "",
+      search: '',
       currentPage: 1,
-      total: 20,
+      pageSize: 10,
+      total: 0,
       tableData: [{
-        id:"17760885",
-        username:"程瑶晟",
-        nickName:"邓丁满",
-        age:"24",
-        sex:"男",
-        address:"3326 E Blvd"
       }],
     }
   },
+  created() {
+    this.load()
+  },
   methods: {
+    load() {
+      request.get("/user",{
+          pageNum: this.currentPage,
+          pageSize: this.pageSize,
+          search: this.search}).then(res => {
+            console.log(res)
+            this.tableData = res.data.records
+      })
+    },
     save() {
-
+      request.post("/user", this.form).then(res => {
+        console.log(res)
+      })
     },
     add() {
       this.dialogVisible = true;

@@ -12,7 +12,7 @@ public class User {
     private int id;
     private String username;
     private String password;
-    private String nick_name;
+    private String nickName;
     private int age;
     private String sex;
     private String address;

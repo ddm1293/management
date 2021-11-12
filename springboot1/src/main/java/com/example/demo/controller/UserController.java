@@ -1,12 +1,14 @@
 package com.example.demo.controller;
 
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo.common.Result;
 import com.example.demo.entity.User;
 import com.example.demo.mapper.UserMapper;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.sun.tools.internal.xjc.model.CDefaultValue;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -19,7 +21,21 @@ public class UserController {
 
     @PostMapping
     public Result<?> save(@RequestBody User user) {
+        if (user.getPassword() == null) {
+            user.setPassword("password");
+        }
         userMapper.insert(user);
         return Result.success();
+    }
+
+    // 分页模糊查询
+    @GetMapping
+    public Result<?> get(@RequestParam(defaultValue = "1") int pageNum,
+                         @RequestParam(defaultValue = "10") int pageSize,
+                         @RequestParam(defaultValue = "") String search) {
+        LambdaQueryWrapper<User> wrapper = Wrappers.<User>lambdaQuery();
+        if (StrUtil.isNotBlank(search)) wrapper.like(User::getNickName, search);
+        Page<User> userPage = userMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
+        return Result.success(userPage);
     }
 }
