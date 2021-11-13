@@ -38,8 +38,8 @@
 
     <!--    搜索区-->
     <div style="margin: 10px 0">
-      <el-input v-model="search" placeholder="请输入关键字" style="width: 20%"></el-input>
-      <el-button type="primary" style="margin-left: 5px">搜索</el-button>
+      <el-input v-model="search" placeholder="请输入关键字" style="width: 20%" clearable></el-input>
+      <el-button type="primary" style="margin-left: 5px" @click="load">搜索</el-button>
     </div>
     <el-table :data="tableData"
               border
@@ -53,13 +53,9 @@
       <el-table-column prop="address" label="地址" />
 
       <el-table-column label="Operations" width="100">
-        <!--        <template #default="scope">
-                  <el-button type="text" size="mini" @click="handleEdit(scope.row)">Edit</el-button>
-                  <el-button type="text" size="mini">Delete</el-button>
-                </template>-->
         <template #default="scope">
           <el-button @click="handleEdit(scope.row)" type="text" size="small">编辑</el-button>
-          <el-popconfirm title="Are you sure to delete this?">
+          <el-popconfirm title="Are you sure to delete this?" @confirm="handleDelete(scope.row.id)">
             <template #reference>
               <el-button type="text" size="small">删除</el-button>
             </template>
@@ -112,26 +108,88 @@ export default {
   },
   methods: {
     load() {
-      request.get("/user",{
+      request.get("/user", {
+        params:{
           pageNum: this.currentPage,
           pageSize: this.pageSize,
-          search: this.search}).then(res => {
+          search: this.search
+        }}).then(res => {
             console.log(res)
             this.tableData = res.data.records
+            this.total = res.data.total
       })
     },
     save() {
-      request.post("/user", this.form).then(res => {
-        console.log(res)
-      })
+      if (this.form.id) { // 更新
+        request.put("/user", this.form).then(res => {
+          console.log(res)
+          if (res.code === "0") {
+            this.$message({
+              type: "success",
+              message: "更新成功",
+            })
+
+          } else {
+            this.$message({
+              type: "error",
+              message: res.msg
+            })
+          }
+          this.load()
+          this.dialogVisible = false
+        })
+      } else { // 新增
+        request.post("/user", this.form).then(res => {
+          console.log(res)
+          if (res.code === "0") {
+            this.$message({
+              type: "success",
+              message: "新增成功"
+            })
+          } else {
+            this.$message({
+              type: "error",
+              message: res.msg
+            })
+          }
+          this.load()
+          this.dialogVisible = false
+        })
+      }
     },
     add() {
       this.dialogVisible = true;
       this.form = {};
     },
-    handleEdit() {},
-    handleSizeChange() {},
-    handleCurrentChange() {},
+    handleEdit(row) {
+      this.form = JSON.parse(JSON.stringify(row))
+      this.dialogVisible = true
+    },
+    handleDelete(id) {
+      console.log(id)
+      request.delete("/user/" + id).then(res => {
+        if (res.code === "0") {
+          this.$message({
+            type: "success",
+            message: "删除成功"
+          })
+        } else {
+          this.$message({
+            type: "error",
+            message: res.msg
+          })
+        }
+        this.load()
+      })
+    },
+    handleSizeChange(pageSize) {
+      this.pageSize = pageSize
+      this.load()
+    },
+    handleCurrentChange(pageNum) {
+      this.currentPage = pageNum
+      this.load()
+    },
   }
 
 }

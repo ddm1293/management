@@ -28,6 +28,12 @@ public class UserController {
         return Result.success();
     }
 
+    @PutMapping
+    public Result<?> update(@RequestBody User user) {
+        userMapper.updateById(user);
+        return Result.success();
+    }
+
     // 分页模糊查询
     @GetMapping
     public Result<?> get(@RequestParam(defaultValue = "1") int pageNum,
@@ -37,5 +43,36 @@ public class UserController {
         if (StrUtil.isNotBlank(search)) wrapper.like(User::getNickName, search);
         Page<User> userPage = userMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
         return Result.success(userPage);
+    }
+
+    // 删除
+    @DeleteMapping("/{id}")
+    public Result<?> delete(@PathVariable Long id) {
+        userMapper.deleteById(id);
+        return Result.success();
+    }
+
+    // 登录查询
+    @PostMapping("/login")
+    public Result<?> login(@RequestBody User user) {
+        User res = userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, user.getUsername()).eq(User::getPassword, user.getPassword()));
+        if (res == null) {
+            return Result.error("-1", "用户名或密码错误");
+        }
+        return Result.success();
+    }
+
+    // 注册
+    @PostMapping("/register")
+    public Result<?> register(@RequestBody User user) {
+        User res = userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, user.getUsername()));
+        if (res != null) {
+            return Result.error("-1", "该用户名已被注册");
+        }
+        if (user.getPassword() == null) {
+            user.setPassword("123456");
+        }
+        userMapper.insert(user);
+        return Result.success();
     }
 }
